@@ -433,7 +433,7 @@ public class Library {
         String newDetails = null;
         boolean found = false;
         int count = 0, instanceToEdit = 0;
-        String details_to_edit = null;
+        String details_to_edit = null, title_to_edit = null;
 
 
         System.out.print("Enter Book ID:");
@@ -493,9 +493,10 @@ public class Library {
                     System.out.print("New Publication year:");
                     String pyear = scan.nextLine();
                     newDetails = split[0] + "," + bname + "," + bauthor + "," + bpublisher + "," + split[4] + "," + pyear + "," + split[6];
-                    instanceToEdit = count;//1
+                    instanceToEdit = count;
                     found = true;
-                    details_to_edit = bname + "," + bauthor + "," + bpublisher + "," + split[4] + "," + pyear + "," + split[6];
+                    title_to_edit = split[1];
+                    details_to_edit = bname + "," + bauthor + "," + bpublisher + "," + split[4] + "," + pyear + "," + split[6] + "," + title_to_edit;
 
 
                 }
@@ -703,7 +704,7 @@ public class Library {
     static void updateAccession(String details, boolean update) {
         String split[] = details.split(",");
         ArrayList<String> container = new ArrayList<>();
-        boolean existing = false;
+        boolean existing = false, found = false;
         int count = 0, posToEdit = 0;
 
         try {
@@ -753,27 +754,42 @@ public class Library {
                         String sep[] = data.split(",");
                         count++;
 
+                        System.out.println(sep[0]);
+                        System.out.println(split[6]);
 
-                        if (sep[0].contains(split[1])) {
+
+                        if (sep[0].contains(split[6]) && !found) {
+
                             posToEdit = count;
+                            found = true;
 
 
                         }
+
                         container.add(data);
 
 
                     }
 
                     FileWriter writer = new FileWriter(file);
-
+                    int index = 0;
                     for (int a = 0; a < container.size(); a++) {
                         if (a + 1 == posToEdit) {
-                            for (int b = 0; b < Integer.parseInt(split[4]); b++) {
-                                writer.write(split[0] + "-" + split[4] + "-" + (a + 1) + "," + split[1] + "," + split[5] + "\n");
+                            for (int b = 0; b < Integer.parseInt(split[3]); b++) {
+                                writer.write(split[0] + "-" + split[4] + "-" + (b + 1) + "," + split[1] + "," + split[5] + "\n");
+                                index++;
 
                             }
                         } else {
-                            writer.write(container.get(a) + "\n");
+                            if (index != 0) {
+
+                                index++;
+
+                            } else {
+                                writer.write(container.get(a) + "\n");
+
+                            }
+
                         }
                     }
                     writer.close();
