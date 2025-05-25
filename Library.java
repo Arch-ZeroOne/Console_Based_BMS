@@ -61,6 +61,7 @@ public class Library {
         String username = scan.nextLine();
         System.out.print("Password:");
         String password = scan.nextLine();
+
         validateUser(username, password);
 
 
@@ -78,7 +79,6 @@ public class Library {
             while (fileReader.hasNextLine()) {
                 String account = fileReader.nextLine();
                 String splitAcc[] = account.split(",");
-
 
                 if (username.trim().equals(splitAcc[1].trim()) && password.trim().equals(splitAcc[2].trim())) {
                     found = true;
@@ -197,14 +197,19 @@ public class Library {
         //calls the table status if data exists
         tableStatus();
 
-        System.out.println();
-        ArrayList<String> container = new ArrayList<>();
+
         try {
             File file = new File("books.txt");
             FileWriter writer = new FileWriter(file, true);
-
+            Scanner reader = new Scanner(file);
+            String accession_details = null, id = null;
             Library library = new Library();
+            ArrayList<String> container = new ArrayList<>();
+            boolean existing = false;
+            int book_stocks = 0, count_to_edit = 0, count = 0;
 
+
+            System.out.println();
             System.out.print("Book title:");
             String bname = scan.nextLine();
             System.out.print("Book author:");
@@ -215,10 +220,55 @@ public class Library {
             String quan = scan.nextLine();
             System.out.print("Publication year:");
             String pyear = scan.nextLine();
+            System.out.println();
 
 
-            writer.write(library.getBookId() + "," + bname + "," + bauthor + "," + bpublisher + "," + quan + "," + pyear + ",Available" + "\n");
+            while (reader.hasNextLine()) {
+                String data = reader.nextLine();
+                String[] split = data.split(",");
+                count++;
+
+                if (bname.equals(split[1])) {
+                    existing = true;
+                    book_stocks = Integer.parseInt(split[4]);
+                    count_to_edit = count;
+                    id = split[0];
+
+                }
+
+                container.add(data);
+
+            }
+
+
+            //writes to database
+            if (existing) {
+                FileWriter clear_db = new FileWriter(file);
+                for (int a = 0; a < container.size(); a++) {
+                    if (a + 1 == count_to_edit) {
+                        clear_db.write(id + "," + bname + "," + bauthor + "," + bpublisher + "," + (book_stocks + Integer.parseInt(quan)) + "," + pyear + ",Available" + "\n");
+
+                    } else {
+                        clear_db.write(container.get(a) + "\n");
+                    }
+                }
+                clear_db.close();
+
+            } else {
+
+                writer.write(library.getBookId() + "," + bname + "," + bauthor + "," + bpublisher + "," + quan + "," + pyear + ",Available" + "\n");
+
+            }
+
+            //stores accession details
+            accession_details = bname + "," + bauthor + "," + bpublisher + "," + quan + "," + pyear + ",Available" + "\n";
+            //updates accession details
+            updateAccession(accession_details, false);
+
+
             writer.close();
+
+
             System.out.println();
             System.out.println(" ══════════════════════════════════ ");
             System.out.println("║                                  ║");
@@ -226,6 +276,7 @@ public class Library {
             System.out.println("║                                  ║");
             System.out.println(" ══════════════════════════════════ ");
             System.out.println();
+
             tableStatus();
 
 
@@ -309,6 +360,7 @@ public class Library {
                             break;
                         case 2:
                             confirm = false;
+
                             break;
 
                     }
@@ -375,12 +427,15 @@ public class Library {
     }
 
     static void updateBook() {
+
         File file = new File("books.txt");
         ArrayList<String> tempStorage = new ArrayList<>();
         String newDetails = null;
         boolean found = false;
         int count = 0, instanceToEdit = 0;
-        Library library = new Library();
+        String details_to_edit = null;
+
+
         System.out.print("Enter Book ID:");
         String bookId = scan.nextLine();
 
@@ -404,6 +459,7 @@ public class Library {
             while (search.hasNextLine()) {
                 String data = search.nextLine();
                 String split[] = data.split(",");
+
                 String id = split[0];
                 count++;
 
@@ -436,19 +492,29 @@ public class Library {
                     String bpublisher = scan.nextLine();
                     System.out.print("New Publication year:");
                     String pyear = scan.nextLine();
-                    newDetails = split[0] + "," + bname + "," + bauthor + "," + bpublisher + "," + pyear + "," + split[5];
-                    instanceToEdit = count;
+                    newDetails = split[0] + "," + bname + "," + bauthor + "," + bpublisher + "," + split[4] + "," + pyear + "," + split[6];
+                    instanceToEdit = count;//1
                     found = true;
+                    details_to_edit = bname + "," + bauthor + "," + bpublisher + "," + split[4] + "," + pyear + "," + split[6];
 
 
                 }
 
+                //mag store sa mga copy
                 tempStorage.add(data);
 
 
             }
+            if (details_to_edit != null) {
+                updateAccession(details_to_edit, true);
+                System.out.println(details_to_edit);
+
+            }
+
+
             if (found) {
                 FileWriter writer = new FileWriter(file);
+
                 for (int a = 0; a < tempStorage.size(); a++) {
                     if (a + 1 == instanceToEdit) {
                         writer.write(newDetails + "\n");
@@ -493,9 +559,12 @@ public class Library {
     }
 
     static void searchBook() {
+
         System.out.print("Enter Book ID:");
         String bookId = scan.nextLine();
+
         boolean found = false;
+
 
         try {
             File file = new File("books.txt");
@@ -529,6 +598,7 @@ public class Library {
                 }
             }
 
+
             if (!found) {
                 System.out.println();
                 System.out.println("╭────────────────────────────────────────╮");
@@ -555,6 +625,7 @@ public class Library {
         try {
             File file = new File("books.txt");
             Scanner fileReader = new Scanner(file);
+
             if (file.length() != 0) {
                 System.out.println();
                 System.out.println("\t\t\t\t\t\t\t\t\t ══════════════════════════════════ ");
@@ -564,7 +635,7 @@ public class Library {
                 System.out.println("\t\t\t\t\t\t\t\t\t ══════════════════════════════════ ");
                 System.out.println();
                 System.out.println("============================================================================================================================================================================================================");
-                System.out.printf("| %-10s | %-40s | %-40s | %-40s | %-20s | %-17s | %-15s |\n",
+                System.out.printf("| %-10s | %-40s | %-40s | %-40s | %-20s | %-17s | %-15s |  \n",
                         "Book ID", "Title", "Author", "Publisher", "Quantity", "Publication Year", "Status");
                 System.out.println("============================================================================================================================================================================================================");
 
@@ -572,6 +643,8 @@ public class Library {
                 while (fileReader.hasNextLine()) {
                     String data = fileReader.nextLine();
                     String split[] = data.split(",");
+
+
                     if (split[6].equals("Available")) {
                         System.out.printf("| %-10s | %-40s | %-40s | %-40s | %-20s | %-17s | %-15s |\n============================================================================================================================================================================================================\n",
                                 split[0], split[1], split[2], split[3], split[4], split[5], split[6]);
@@ -592,7 +665,7 @@ public class Library {
             }
 
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
             System.out.println("Error at tableStatus");
         }
 
@@ -623,6 +696,99 @@ public class Library {
 
 
         return count + 1;
+
+
+    }
+
+    static void updateAccession(String details, boolean update) {
+        String split[] = details.split(",");
+        ArrayList<String> container = new ArrayList<>();
+        boolean existing = false;
+        int count = 0, posToEdit = 0;
+
+        try {
+            File file = new File("accession.txt");
+            Scanner reader = new Scanner(file);
+
+
+            if (!update) {
+                FileWriter writer = new FileWriter(file, true);
+                //reads file for filtering of same book title
+                while (reader.hasNextLine()) {
+                    String data = reader.nextLine();
+                    String sep[] = data.split(",");
+
+
+                    //if book title exists we count its instance to continue the count for id
+                    if (sep[0].contains(split[0])) {
+                        existing = true;
+                        count++;
+
+
+                    }
+                }
+
+                if (existing) {
+
+                    for (int a = 0; a < Integer.parseInt(split[3]); a++) {
+                        writer.write(split[0] + "-" + split[4] + "-" + ((a + 1) + count) + "," + split[1] + "," + split[5]);
+
+
+                    }
+
+                } else {
+                    for (int a = 0; a < Integer.parseInt(split[3]); a++) {
+                        writer.write(split[0] + "-" + split[4] + "-" + (a + 1) + "," + split[1] + "," + split[5]);
+
+
+                    }
+
+                }
+                writer.close();
+
+            } else {
+                try {
+                    while (reader.hasNextLine()) {
+                        String data = reader.nextLine();
+                        String sep[] = data.split(",");
+                        count++;
+
+
+                        if (sep[0].contains(split[1])) {
+                            posToEdit = count;
+
+
+                        }
+                        container.add(data);
+
+
+                    }
+
+                    FileWriter writer = new FileWriter(file);
+
+                    for (int a = 0; a < container.size(); a++) {
+                        if (a + 1 == posToEdit) {
+                            for (int b = 0; b < Integer.parseInt(split[4]); b++) {
+                                writer.write(split[0] + "-" + split[4] + "-" + (a + 1) + "," + split[1] + "," + split[5] + "\n");
+
+                            }
+                        } else {
+                            writer.write(container.get(a) + "\n");
+                        }
+                    }
+                    writer.close();
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+
+                }
+
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
 
     }
